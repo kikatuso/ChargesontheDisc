@@ -70,8 +70,7 @@ def calculate_energy(n,charges_radius,charges_theta):
 
      
 #### HERE THE SIMULATION BEGINS, WE LOOK FOR GLOBAL MINIMUM AS A FUNCTION OF ALL CHARGES POSITION ON THE DISC
-def findingbest(z,l):
-    number = 12 # number of charges
+def findingbest(z,l,number):
     r = 10
     
     charges_radius,charges_theta = generate_random(number)
@@ -131,8 +130,8 @@ for i in np.arange(0.1,1.0,0.05):
         z,l,energy,charges_radius,charges_theta= findingbest(y,i)
         find_best_matrix = find_best_matrix.append({"first_para":z,"second_para":l,"energy":energy},ignore_index=True)
 
-"""
-z,l,energy,charges_radius,charges_theta= findingbest(1.0,1.0)
+
+z,l,energy,charges_radius,charges_theta= findingbest(1.0,1.0,7)
 ### PLOTING CHARGES' POSITION ON THE POLAR PLOT AND CHECKING THE FINAL ENERGY OF THE SYSTEM
 ax = plt.subplot(111, projection='polar')
 ax.plot(charges_theta,charges_radius,marker='o',markersize=7)
@@ -140,8 +139,8 @@ ax.set_yticks(np.linspace(1.0,r,r//2))
 ax.set_title("Energy of this system is "+str(energy)+" eV",y=1.08)
 ax.set_xlabel("The energy difference is  " + str(energy-sqrt(3)/10.0))
 plt.show()
+"""
 
 
-
-
+energy_df = pd.read_csv("Energy_min_table.csv")
 

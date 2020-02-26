@@ -12,8 +12,8 @@ def uniform(n):
     else: return floor(n*random.random()+1)
    
 _first_random=1
-q = 1 # initially we assume all charges have the same charge 
 r = 10
+
 def generate_random(number):
     """
     Function for creating random position for n charges
@@ -118,6 +118,7 @@ def findingbest(z,l,number):
                         charges_radius = kept_charges_radius
                 else:
                     energy +=delta_energy
+            
         T_0= 0.9*T_0
     return z,l,energy,charges_radius,charges_theta
 
@@ -141,6 +142,23 @@ ax.set_xlabel("The energy difference is  " + str(energy-sqrt(3)/10.0))
 plt.show()
 """
 
+def update_table():
+    energy_df = pd.read_csv("Energy_min_table.csv")
+    energy_obtained = []
+    energy_difference= []
+    
+    for i,val in enumerate(np.arange(2,7)):
+        print(val)
+        z,l,energy,charges_radius,charges_theta= findingbest(1.0,0.3,val)
+        energy_obtained.append(energy)
+        difference = energy-energy_df["min energy"][i] 
+        energy_difference.append(difference)
+    
+    energy_df= energy_df.assign(energy_obtained=energy_obtained)
+    energy_df= energy_df.assign(energy_difference=energy_difference)     
+    energy_df.to_csv("Energy_min_comparision.csv",header=True,index=False, encoding='utf-8')
+    return energy_df
 
-energy_df = pd.read_csv("Energy_min_table.csv")
 
+    
+    

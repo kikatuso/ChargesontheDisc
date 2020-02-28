@@ -39,8 +39,8 @@ def calculate_energy(n,charges_radius,charges_theta):
 
 
 
-n =5
-angle= 72 
+n =11
+angle= 32.72
 theta = [m.radians(angle*i) for i in range(n)]
 radius=[r for i in range(n)]
 
@@ -51,4 +51,3 @@ plt.show()
 
 
 energy,net_distance = calculate_energy(n,radius,theta)
-print(energy)

@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from random import randrange
-from math import cos,sqrt,exp,floor,radians
+from math import cos,sqrt,exp,floor,radians,e
 import random
 import pandas as pd
 
@@ -74,9 +74,9 @@ def calculate_energy(n,charges_radius,charges_theta):
 def scale(c):
     scalling=1.0
     if c>200:
-        scalling = 0.6
+        scalling = 1.5
     elif c>300:
-        scalling = 1.0
+        scalling = 2.0
     return scalling
 
  
@@ -96,11 +96,13 @@ def energy_find(number):
         #values=values.append(entry,ignore_index=True)
     T_0 = 300 # our initial temperature expressed in Kelvins 
     theta_incr = 0.0174533
-    radial_incr = 0.35
-    m = 100 # number of repetitions per given temperature
-    while T_0 > 1e-5:
+    radial_incr = 0.5
+    m = 50000 # number of repetitions per given temperature
+    while T_0 > 1e-2:
         for i in range(m):
             c +=1
+            theta_incr = theta_incr*scale(c)
+            radial_incr = radial_incr*scale(c)
             old_theta = val_dic[c-1]["theta"]
             old_radius = val_dic[c-1]["radius"]
             energy= val_dic[c-1]["energy"]
@@ -112,6 +114,8 @@ def energy_find(number):
                 n = randrange(1,3)
                 delta_theta = (-1)**n *theta_incr
                 new_theta[which_charge] +=delta_theta
+                if new_theta[which_charge]<0 or new_theta[which_charge]>2*np.pi:
+                    new_theta[which_charge]=np.random.random()*2*np.pi
             if which_coordinate==1:
                 new_theta = list(old_theta)
                 new_radius =list(old_radius)
@@ -137,7 +141,7 @@ def energy_find(number):
                 val_dic[c]=[]
                 val_dic[c] = {"radius":new_radius,"theta":new_theta,"energy":new_energy}
 
-        T_0= 0.95*T_0
+        T_0= (1/e)*T_0
         
     val_df = pd.DataFrame(val_dic).T
     energy = val_df.energy.min()

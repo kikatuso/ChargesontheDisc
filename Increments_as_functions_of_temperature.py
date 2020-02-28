@@ -1,9 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from random import randrange
-from math import cos,sqrt,exp,floor,radians,e
+from math import cos,sqrt,exp,floor,radians
 import random
 import pandas as pd
+import matplotlib.animation as animation
+from statistics import mean
 
 def uniform(n):
     global _first_random
@@ -64,6 +66,10 @@ def calculate_energy(n,charges_radius,charges_theta):
         thetas = list(charges_theta[i+1:]) # all thetas with index higher than the current one
         for i,val in enumerate(thetas):
             net = theta_1-val
+            if net == np.inf or net==-np.inf:
+                print(theta_1)
+                print(val)
+                raise ValueError('infinity!')
             net_distance = sqrt(radius_1**2+radii[i]**2-2*radii[i]*radius_1*cos(net))
             net_distances.append(net_distance)
             energy += q*q*(1.0/net_distance)
@@ -73,18 +79,18 @@ def calculate_energy(n,charges_radius,charges_theta):
 
 def scale(c):
     scalling=1.0
-    if c>200:
-        scalling = 1.5
-    elif c>300:
-        scalling = 2.0
+    if c==int(0.8*336001):
+        scalling = 5
+    elif c==int(0.9*336001):
+        scalling = 10.0
     return scalling
 
  
-    
 
 #### HERE THE SIMULATION BEGINS, WE LOOK FOR GLOBAL MINIMUM AS A FUNCTION OF ALL CHARGES POSITION ON THE DISC
 def energy_find(number):
     val_dic = {}
+    delta = []
     r = 10
     c = 0 
     if c==0:
@@ -92,17 +98,14 @@ def energy_find(number):
         energy,net_distances = calculate_energy(number,radius,theta)
         val_dic[c] = []
         val_dic[c] = {"radius":radius,"theta":theta,"energy":energy}
-        #entry=pd.DataFrame({"radius":[radius],"theta":[theta],"energy":energy})
-        #values=values.append(entry,ignore_index=True)
-    T_0 = 300 # our initial temperature expressed in Kelvins 
+
+    T_0 = 1 # our initial temperature expressed in Kelvins 
     theta_incr = 0.0174533
-    radial_incr = 0.5
-    m = 50000 # number of repetitions per given temperature
-    while T_0 > 1e-2:
+    radial_incr = 0.10
+    m = 1000 # number of repetitions per given temperature
+    while T_0 > 1e-7:
         for i in range(m):
             c +=1
-            theta_incr = theta_incr*scale(c)
-            radial_incr = radial_incr*scale(c)
             old_theta = val_dic[c-1]["theta"]
             old_radius = val_dic[c-1]["radius"]
             energy= val_dic[c-1]["energy"]
@@ -114,8 +117,10 @@ def energy_find(number):
                 n = randrange(1,3)
                 delta_theta = (-1)**n *theta_incr
                 new_theta[which_charge] +=delta_theta
-                if new_theta[which_charge]<0 or new_theta[which_charge]>2*np.pi:
-                    new_theta[which_charge]=np.random.random()*2*np.pi
+                if new_theta[which_charge]>2*np.pi:
+                    new_theta[which_charge] -= 2*np.pi
+                elif new_theta[which_charge]<0.0:
+                    new_theta[which_charge] += 2*np.pi
             if which_coordinate==1:
                 new_theta = list(old_theta)
                 new_radius =list(old_radius)
@@ -123,9 +128,10 @@ def energy_find(number):
                 delta_radius = (-1)**n *radial_incr
                 new_radius[which_charge] += delta_radius
                 if new_radius[which_charge]>r or new_radius[which_charge]<0.0:
-                    new_radius[which_charge]=np.random.random()*10.0
+                    new_radius[which_charge]=old_radius[which_charge]
             new_energy,net_distances = calculate_energy(number,new_radius,new_theta)
             delta_energy = new_energy-energy
+            delta.append(delta_energy)
             if delta_energy >=0.0:
                 accept_the_change = uniform(1) # generating a random number to decide if we accept the change
                 if accept_the_change < exp(-delta_energy/T_0):
@@ -135,24 +141,27 @@ def energy_find(number):
                 else:
                     val_dic[c]=[]
                     val_dic[c]={"radius":old_radius,"theta":old_theta,"energy":energy}
-#
 
             else:
                 val_dic[c]=[]
                 val_dic[c] = {"radius":new_radius,"theta":new_theta,"energy":new_energy}
 
-        T_0= (1/e)*T_0
+        T_0= 0.95*T_0
+        #ax = plt.subplot(111, projection='polar')
+        #ax.plot(val_dic[c]["theta"],val_dic[c]["radius"],marker='o',markersize=7)
+        #plt.show()
         
-    val_df = pd.DataFrame(val_dic).T
-    energy = val_df.energy.min()
-    index =  val_df.energy.idxmin()
-    theta = val_df.loc[index,"theta"]
-    radius = val_df.loc[index,"radius"]
-    return val_df,energy,theta,radius
+        
+    df = pd.DataFrame(val_dic).T
+    energy = df.energy.min()
+    index =  pd.to_numeric(df.energy).idxmin()
+    theta = df.loc[index,"theta"]
+    radius = df.loc[index,"radius"]
+    
+    return df,energy,radius,theta,delta
 
 
-val_df,energy,theta,radius = energy_find(11)
-
+df,energy,radius,theta,delta= energy_find(11)
 
 ### PLOTING CHARGES' POSITION ON THE POLAR PLOT AND CHECKING THE FINAL ENERGY OF THE SYSTEM
 ax = plt.subplot(111, projection='polar')
@@ -162,6 +171,33 @@ ax.set_title("Energy of this system is "+str(energy)+" eV",y=1.08)
 ax.set_xlabel("The energy difference is  " + str(energy-0.6881909602355869))
 plt.show()
 
+
+
+
+"""
+
+
+
+fig = plt.figure(figsize=(4,4))
+ax = fig.add_subplot(111, projection='polar')
+ax.set_ylim(0,10)
+
+
+l,  = ax.plot([],[],'*',markersize=12)
+
+def update(i):
+    global df
+    radius= df.radius[df.shape[0]-1-i]
+    theta = df.theta[df.shape[0]-1-i]
+    #df.loc['radius',-1] = df.iloc['radius',0]
+    #df.loc['theta',-1] = df.loc['theta',0]
+    l.set_data(theta, radius )
+    return l, 
+
+ani = animation.FuncAnimation(fig, update, frames=1000, interval=200, blit=True)
+ani.save('simulation.gif', writer = 'imagemagick')
+
+"""
 
 
 

@@ -39,15 +39,14 @@ def calculate_energy(n,charges_radius,charges_theta):
 
 
 
-n =11
-angle= 32.72
+n =3
+angle= 120
+
 theta = [m.radians(angle*i) for i in range(n)]
 radius=[r for i in range(n)]
-
+energy,net_distances  = calculate_energy(n,radius,theta)
 ax = plt.subplot(111, projection='polar')
 ax.plot(theta,radius,marker='o',markersize=7)
 ax.set_yticks(np.linspace(1.0,r,r//2))
 plt.show()
-
-
-energy,net_distance = calculate_energy(n,radius,theta)
+print(energy)

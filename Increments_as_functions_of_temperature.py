@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from random import randrange
-from math import cos,sqrt,exp,floor,radians
+from math import cos,sqrt,exp,floor,radians,log
 import random
 import pandas as pd
 import matplotlib.animation as animation
@@ -77,18 +77,20 @@ def calculate_energy(n,charges_radius,charges_theta):
     return energy,net_distances
 
 
-def scale(c):
-    scalling=1.0
-    if c==int(0.8*336001):
-        scalling = 5
-    elif c==int(0.9*336001):
-        scalling = 10.0
-    return scalling
+def tempScaling(a):
+    #T = np.linspace(1e-12, 2, 100)
+    #y = np.exp(-a/T)
+    T_s = -a/log(0.8) 
+    T_f = -a/log(0.001) # final temperature
+    
+    return T_s, T_f
+    
+    
+T_s, T_f = tempScaling(0.0013036489651996666) 
 
- 
 
 #### HERE THE SIMULATION BEGINS, WE LOOK FOR GLOBAL MINIMUM AS A FUNCTION OF ALL CHARGES POSITION ON THE DISC
-def energy_find(number):
+def energy_find(number,Ts=T_s,Tf=T_f):
     val_dic = {}
     delta = []
     r = 10
@@ -98,12 +100,10 @@ def energy_find(number):
         energy,net_distances = calculate_energy(number,radius,theta)
         val_dic[c] = []
         val_dic[c] = {"radius":radius,"theta":theta,"energy":energy}
-
-    T_0 = 1 # our initial temperature expressed in Kelvins 
-    theta_incr = 0.0174533
-    radial_incr = 0.10
+    theta_incr = radians(3)
+    radial_incr = 0.1
     m = 1000 # number of repetitions per given temperature
-    while T_0 > 1e-7:
+    while Ts > Tf:
         for i in range(m):
             c +=1
             old_theta = val_dic[c-1]["theta"]
@@ -131,10 +131,10 @@ def energy_find(number):
                     new_radius[which_charge]=old_radius[which_charge]
             new_energy,net_distances = calculate_energy(number,new_radius,new_theta)
             delta_energy = new_energy-energy
-            delta.append(delta_energy)
             if delta_energy >=0.0:
+                delta.append(delta_energy)
                 accept_the_change = uniform(1) # generating a random number to decide if we accept the change
-                if accept_the_change < exp(-delta_energy/T_0):
+                if accept_the_change < exp(-delta_energy/Ts):
                     val_dic[c]=[]
                     val_dic[c]={"radius":new_radius,"theta":new_theta,"energy":new_energy}
 
@@ -146,11 +146,7 @@ def energy_find(number):
                 val_dic[c]=[]
                 val_dic[c] = {"radius":new_radius,"theta":new_theta,"energy":new_energy}
 
-        T_0= 0.95*T_0
-        #ax = plt.subplot(111, projection='polar')
-        #ax.plot(val_dic[c]["theta"],val_dic[c]["radius"],marker='o',markersize=7)
-        #plt.show()
-        
+        Ts= 0.95*Ts
         
     df = pd.DataFrame(val_dic).T
     energy = df.energy.min()
@@ -161,43 +157,39 @@ def energy_find(number):
     return df,energy,radius,theta,delta
 
 
-df,energy,radius,theta,delta= energy_find(11)
+df,energy,radius,theta,delta= energy_find(3)
 
 ### PLOTING CHARGES' POSITION ON THE POLAR PLOT AND CHECKING THE FINAL ENERGY OF THE SYSTEM
 ax = plt.subplot(111, projection='polar')
 ax.plot(theta,radius,marker='o',markersize=7)
 ax.set_yticks(np.linspace(1.0,r,r//2))
 ax.set_title("Energy of this system is "+str(energy)+" eV",y=1.08)
-ax.set_xlabel("The energy difference is  " + str(energy-0.6881909602355869))
+ax.set_xlabel("The energy difference is  " + str(energy-0.17320508075688773))
 plt.show()
 
 
 
 
-"""
 
 
+def createMovie(df):
+    fig = plt.figure(figsize=(4,4))
+    ax = fig.add_subplot(111, projection='polar')
+    ax.set_ylim(0,10)
+    l,  = ax.plot([],[],'*',markersize=12)
+    
+    def update(i):
+        global df
+        radius= df.radius[100*i]
+        theta = df.theta[100*i]
+        l.set_data(theta, radius )
+        return l,  
+    plt.rcParams['animation.ffmpeg_path'] = r'C:/Users/zuzan/ffmpeg-20200227-9b22254-win64-static/ffmpeg-20200227-9b22254-win64-static/bin/ffmpeg'
+    FFwriter=animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
+    ani = animation.FuncAnimation(fig, update, frames=int(df.shape[0]/100), interval=100, blit=True)
+    ani.save('simulation.mp4', writer = FFwriter)
 
-fig = plt.figure(figsize=(4,4))
-ax = fig.add_subplot(111, projection='polar')
-ax.set_ylim(0,10)
 
-
-l,  = ax.plot([],[],'*',markersize=12)
-
-def update(i):
-    global df
-    radius= df.radius[df.shape[0]-1-i]
-    theta = df.theta[df.shape[0]-1-i]
-    #df.loc['radius',-1] = df.iloc['radius',0]
-    #df.loc['theta',-1] = df.loc['theta',0]
-    l.set_data(theta, radius )
-    return l, 
-
-ani = animation.FuncAnimation(fig, update, frames=1000, interval=200, blit=True)
-ani.save('simulation.gif', writer = 'imagemagick')
-
-"""
 
 
 

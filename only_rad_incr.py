@@ -102,6 +102,7 @@ def energy_find(number,Ts=T_s,Tf=T_f):
     m = 200 # number of repetitions per given temperature
     while Ts > Tf:
         for i in range(m):
+            radial_incr = 0.5
             c +=1
             old_theta = val_dic[c-1]["theta"]
             old_radius = val_dic[c-1]["radius"]
@@ -141,7 +142,7 @@ def energy_find(number,Ts=T_s,Tf=T_f):
                     val_dic[c]=[]
                     val_dic[c] = {"radius":new_radius,"theta":new_theta,"energy":new_energy,"temp":Ts}
                     break
-                if w%3600==0:
+                if w%360==0:
                     radial_incr = 0.99*radial_incr
                 if radial_incr< 5*1e-3:
                     break

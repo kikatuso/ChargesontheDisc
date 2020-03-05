@@ -177,16 +177,19 @@ def createMovie(df):
     ax = fig.add_subplot(111, projection='polar')
     ax.set_ylim(0,10)
     l,  = ax.plot([],[],'*',markersize=12)
+    ax.legend()
     
     def update(i):
         global df
-        radius= df.radius[100*i]
-        theta = df.theta[100*i]
+        radius= df.radius[i]
+        theta = df.theta[i]
+        temp = df.temp[*i]
         l.set_data(theta, radius )
+        l.set_label("Temp"+str(temp))
         return l,  
     plt.rcParams['animation.ffmpeg_path'] = r'C:/Users/zuzan/ffmpeg-20200227-9b22254-win64-static/ffmpeg-20200227-9b22254-win64-static/bin/ffmpeg'
     FFwriter=animation.FFMpegWriter(fps=30, extra_args=['-vcodec', 'libx264'])
-    ani = animation.FuncAnimation(fig, update, frames=int(df.shape[0]/100), interval=100, blit=True)
+    ani = animation.FuncAnimation(fig, update, frames=int(df.shape[0]), interval=200, blit=True)
     ani.save('simulation.mp4', writer = FFwriter)
 
 

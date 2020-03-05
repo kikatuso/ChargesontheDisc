@@ -39,8 +39,8 @@ def calculate_energy(n,charges_radius,charges_theta):
 
 
 
-n =3
-angle= 120
+n =8
+angle= 360.0/8.0
 
 theta = [m.radians(angle*i) for i in range(n)]
 radius=[r for i in range(n)]

@@ -44,36 +44,45 @@ def generate_random(number):
     return charges_radius,charges_theta
     
 
-def calculate_energy(n,charges_radius,charges_theta):
-    """Function for calculating the net distances between charges and the consequent energy of the system. 
-    
-    Parameters
-    ---------
-    n -- number of charges in the system. Takes integer values (default 3)
-    
-    Outputs 
-    --------
-    energy -- The resultant energy of the system. Expressed as a float. 
-    
+
+def cosRule(rad1,rad2,ang1,ang2):
+    q = 1.0
+    net= ang2-ang1
+    net_distance = sqrt(rad1**2+rad2**2-2*rad1*rad2*cos(net))
+    try:
+        energy = q*q*(1.0/net_distance)
+        
+    except ZeroDivisionError:
+        energy = 1e12
+    return energy
+
+def partial_energy(no,radii,thetas,enMatrix):
     """
-    q = 1
-    net_distances=[]
-    energy=0.0
-    for i in range(n-1):
-        radius_1=charges_radius[i]
-        theta_1=charges_theta[i]
-        radii = list(charges_radius[i+1:]) # all radii with index higher than the current one
-        thetas = list(charges_theta[i+1:]) # all thetas with index higher than the current one
-        for i,val in enumerate(thetas):
-            net = theta_1-val
-            net_distance = sqrt(radius_1**2+radii[i]**2-2*radii[i]*radius_1*cos(net))
-            net_distances.append(net_distance)
-            try:
-                energy += q*q*(1.0/net_distance)
-            except ZeroDivisionError:
-                energy += 1e5
-            
-    return energy,net_distances
+    no- ordinary number of the charge that you moved and calculate the change in energy as a result of displacement" 
+    """
+    radiusA = radii[no]
+    thetaA  = thetas[no]
+    for key,theta in enumerate(thetas):
+        if not key==no:
+            radiusB = radii[key]
+            thetaB = theta
+            energy = cosRule(radiusB,radiusA,thetaB,thetaA)
+            enMatrix[key][no]= 0.5*energy
+            enMatrix[no][key] = enMatrix[key][no]
+    return enMatrix
+
+def total_energy(n,radius,thetas,enMatrix=None,which=None):
+    if enMatrix is None:
+        enMatrix = np.zeros([n,n])
+        for i in range(n):
+            enMatrixNew= partial_energy(i,radius,thetas,enMatrix=enMatrix)
+            energy = sum(enMatrixNew).sum()
+        return energy,enMatrix
+    else:
+        enMatrixNew=partial_energy(which,radius,thetas,enMatrix)
+        energy = sum(enMatrixNew).sum()
+        return energy,enMatrixNew
+       
 
 
 def tempScaling(a):
@@ -94,12 +103,11 @@ def energy_find(number,Ts=T_s,Tf=T_f):
     c = 0 
     if c==0:
         radius,theta = generate_random(number)
-        energy,net_distances = calculate_energy(number,radius,theta)
+        energy,enMatrix = total_energy(number,radius,theta)
         val_dic[c] = []
-        val_dic[c] = {"radius":radius,"theta":theta,"energy":energy,"temp":Ts}
-    #radial_incr = pow(Ts,3/2)
+        val_dic[c] = {"radius":radius,"theta":theta,"energy":energy,"temp":Ts,"energies":enMatrix}
     radial_incr = 0.5
-    m = 200 # number of repetitions per given temperature
+    m = 5 # number of repetitions per given temperature
     while Ts > Tf:
         for i in range(m):
             radial_incr = 0.5
@@ -107,6 +115,7 @@ def energy_find(number,Ts=T_s,Tf=T_f):
             old_theta = val_dic[c-1]["theta"]
             old_radius = val_dic[c-1]["radius"]
             energy= val_dic[c-1]["energy"]
+            old_energies = val_dic[c-1]["energies"]
             which_charge = randrange(number) # creating a random number from range 0-number to find a random charge by index 
             new_theta = list(old_theta)
             new_radius = list(old_radius)
@@ -118,37 +127,37 @@ def energy_find(number,Ts=T_s,Tf=T_f):
                 new_radius[which_charge] += delta_radius
                 if new_radius[which_charge]>r or new_radius[which_charge]<0.0:
                     new_radius[which_charge]=old_radius[which_charge]
-                new_energy,net_distances = calculate_energy(number,new_radius,new_theta)
+                new_energy,enMatrix= total_energy(number,new_radius,new_theta,old_energies,which_charge)
                 delta_energy = new_energy-energy
                 if delta_energy >0.0:
                     delta.append(delta_energy)
                     accept_the_change = uniform(1) # generating a random number to decide if we accept the change
                     if accept_the_change < exp(-delta_energy/Ts):
                         val_dic[c]=[]
-                        val_dic[c]={"radius":new_radius,"theta":new_theta,"energy":new_energy,"temp":Ts}
+                        val_dic[c]={"radius":new_radius,"theta":new_theta,"energy":new_energy,"temp":Ts,"energies":enMatrix}
                         w +=1
                      
                         
                         
                     else:
                         val_dic[c]=[]
-                        val_dic[c]={"radius":old_radius,"theta":old_theta,"energy":energy,"temp":Ts}
+                        val_dic[c]={"radius":old_radius,"theta":old_theta,"energy":energy,"temp":Ts,"energies":old_energies}
                         w +=1
                         
                     
+                                  
                 
             
                 else:
                     val_dic[c]=[]
-                    val_dic[c] = {"radius":new_radius,"theta":new_theta,"energy":new_energy,"temp":Ts}
+                    val_dic[c] = {"radius":new_radius,"theta":new_theta,"energy":new_energy,"temp":Ts,"energies":enMatrix}
                     break
                 if w%360==0:
-                    radial_incr = 0.99*radial_incr
+                    radial_incr = 0.9*radial_incr
                 if radial_incr< 5*1e-3:
                     break
                     
 
-                  
 
         Ts=Ts*0.95
         
@@ -161,7 +170,7 @@ def energy_find(number,Ts=T_s,Tf=T_f):
     return df,energy,radius,theta,delta
 
 
-df,energy,radius,theta,delta= energy_find(8)
+df,energy,radius,theta,delta= energy_find(5)
 
 ### PLOTING CHARGES' POSITION ON THE POLAR PLOT AND CHECKING THE FINAL ENERGY OF THE SYSTEM
 ax = plt.subplot(111, projection='polar')

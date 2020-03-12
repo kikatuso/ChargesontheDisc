@@ -183,7 +183,7 @@ def createMovie(df):
         global df
         radius= df.radius[i]
         theta = df.theta[i]
-        temp = df.temp[*i]
+        temp = df.temp[i]
         l.set_data(theta, radius )
         l.set_label("Temp"+str(temp))
         return l,  

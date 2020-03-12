@@ -1,69 +1,12 @@
 
-
-from math import sqrt,cos,radians
+from functions import total_energy,uniform
+from math import sqrt,cos,radians,sin,atan,acos
 import matplotlib.pyplot as plt
 import numpy as np
-r=10.0
+
 from random import randrange
+from copy import copy
 
-def uniform(n):
-    global _first_random
-    if n==0: random.seed(1234); _first_random=0
-    if _first_random==1: random.seed(None); _first_random=0
-    if n==1: return random.random()
-    else: return floor(n*random.random()+1)
-   
-_first_random=1
-
-def cosRule(rad1,rad2,ang1,ang2):
-    q = 1.0
-    net= ang2-ang1
-    net_distance = sqrt(rad1**2+rad2**2-2*rad1*rad2*cos(net))
-    try:
-        energy = q*q*(1.0/net_distance)
-        
-    except ZeroDivisionError:
-        energy = 1e12
-    return energy
-
-def partial_energy(no,radii,thetas,enMatrix):
-    """
-    no- ordinary number of the charge that you moved and calculate the change in energy as a result of displacement" 
-    """
-    radiusA = radii[no]
-    thetaA  = thetas[no]
-    for key,theta in enumerate(thetas):
-        if not key==no:
-            radiusB = radii[key]
-            thetaB = theta
-            energy = cosRule(radiusB,radiusA,thetaB,thetaA)
-            enMatrix[key][no] =enMatrix[no][key]= 0.5*energy
-    return enMatrix
-
-def total_energy(n,radius,thetas,enMatrix=None,which=None):
-    if enMatrix is None:
-        enMatrix = np.zeros([n,n])
-        for i in range(n):
-            enMatrix= partial_energy(i,radius,thetas,enMatrix=enMatrix)
-
-            energy = sum(enMatrix).sum()
-        return energy,enMatrix
-    else:
-        enMatrixNew=partial_energy(which,radius,thetas,enMatrix)
-        energy = sum(enMatrixNew).sum()
-        return energy,enMatrixNew
-    
-number =3
-angle= 120.0
-theta1 = [radians(angle*i) for i in range(number)]
-radius1=[r for i in range(number)]
-
-
-#energy,matrix = total_energy(number,radius1,theta1)
-"""
-print(energy)
-print(matrix)
-print("================================================================================")
 """
 def moveCharge(number,thetas,radius):
     step = 2.05
@@ -73,25 +16,60 @@ def moveCharge(number,thetas,radius):
     delta_radius = (-1)**n *step
     radius[which] +=delta_radius
     if radius[which]>r or radius[which]<0.0:
-        radius[which] +=(-1)**(n+1) * step
+        radius[which] -=delta_radius
     return thetas,radius,which
+"""
 
-#theta2,radius2,which = moveCharge(number,theta1,radius1)
-#print(str(which)+" charge that was moved")
-#energy1, matrixNew = total_energy(number,radius2,theta2,matrix,which)
-#energy2, matrix = total_energy(number,radius2,theta2)
-"""
-print(energy1)
-print(matrixNew)
-print("------------------------------------------------------------------------------")
-print(energy2)
-print(matrix)
-"""
-energy2, matrix = total_energy(5,radius,theta)
+
+def cartes(radius,theta):
+    x=[]
+    y=[]
+    for i,val in enumerate(radius):
+       x.append(val*cos(theta[i])) 
+       y.append(val*sin(theta[i]))
+    return x,y
+
+def polar(x,y):
+    radius=[]
+    theta = []
+    for i, val in enumerate(x):
+        radius.append(np.sqrt(val**2+y[i]**2))
+        theta.append(np.arctan2(y[i],val))
+    return radius,theta
+
+
+r = 10.0
+
+def moveCharge(number,theta,radius,which):
+    r=10.0
+    step = 5.5
+    x_old,y_old = cartes(radius,theta)
+    angle = 2*uniform(1)*np.pi
+    n = randrange(1,3)
+    delta_radius = (-1)**n *step
+    x_new = copy(x_old)
+    y_new = copy(y_old)
+    x_new[which]=x_old[which]+cos(angle)*delta_radius
+    y_new[which] = y_old[which] +sin(angle)*delta_radius
+    n_radius,n_theta = polar(x_new,y_new)
+    if n_radius[which]>r or n_radius[which]<0.0:
+        n_radius[which] =radius[which]
+    return n_theta,n_radius
+
+
+
+
+number =11
+angle= 360.0/float(number)
+theta = [radians(angle*i) for i in range(number)]
+radius=[r for i in range(number)]
+energy, matrix = total_energy(number,radius,theta)
+
+
 ax = plt.subplot(111, projection='polar')
 ax.plot(theta,radius,marker='o',markersize=7)
 ax.set_yticks(np.linspace(1.0,r,r//2))
+plt.show()
 print(energy)
-
 
 

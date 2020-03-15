@@ -59,7 +59,7 @@ def moveCharge(number,theta,radius,which):
 
 
 
-number =11
+number =3
 angle= 360.0/float(number)
 theta = [radians(angle*i) for i in range(number)]
 radius=[r for i in range(number)]
@@ -70,6 +70,6 @@ ax = plt.subplot(111, projection='polar')
 ax.plot(theta,radius,marker='o',markersize=7)
 ax.set_yticks(np.linspace(1.0,r,r//2))
 plt.show()
+energy, matrix = total_energy(number,radius,theta)
 print(energy)
-
 

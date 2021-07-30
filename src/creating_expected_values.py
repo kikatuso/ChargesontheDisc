@@ -1,5 +1,5 @@
 
-from functions import total_energy,uniform
+
 from math import sqrt,cos,radians,sin,atan,acos
 import matplotlib.pyplot as plt
 import numpy as np
@@ -57,19 +57,39 @@ def moveCharge(number,theta,radius,which):
     return n_theta,n_radius
 
 
+from functions import total_energy,uniform
+from math import radians
+
+number =28
+inners = 5 
+r1 = 10.0
+energies = []
+radi2 = []
+for i in np.arange(4.0,6.0,0.001):
+    r2 =4.524000000000175
+    angle= 360.0/float(number-inners)
+    theta = [radians(angle*i) for i in range(number-inners)]
+    radius=[r1 for i in range(number-inners)]
+    angle2= 360.0/float(inners)
+    theta2 = [radians(angle2*i+22) for i in range(inners)]
+    radius2 = [r2 for i in range(inners)]
+    radius.extend(radius2)
+    theta.extend(theta2)
+    energy, matrix = total_energy(number,radius,theta)
+    energies.append(energy)
+    radi2.append(i)
+index = energies.index(min(energies))
+r2 = radi2[index]
 
 
-number =3
-angle= 360.0/float(number)
-theta = [radians(angle*i) for i in range(number)]
-radius=[r for i in range(number)]
-energy, matrix = total_energy(number,radius,theta)
 
 
-ax = plt.subplot(111, projection='polar')
-ax.plot(theta,radius,marker='o',markersize=7)
-ax.set_yticks(np.linspace(1.0,r,r//2))
-plt.show()
-energy, matrix = total_energy(number,radius,theta)
-print(energy)
 
+r = 10.0
+c = "orangered"
+### PLOTING CHARGES' POSITION ON THE POLAR PLOT AND CHECKING THE FINAL ENERGY OF THE SYSTEM
+fig, ax = plt.subplots(1, 1,figsize=(10,10), subplot_kw=dict(projection='polar'))
+ax.scatter(theta,radius,marker='o',s=100,c=c)
+ax.set_ylim([0,10.3])
+ax.set_title("Energy of this system is "+str(energy)+" eV",y=1.08)
+plt.savefig("correcting/{}.png".format(number))

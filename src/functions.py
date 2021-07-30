@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from random import randrange
-from math import cos,sqrt,floor,log
+from math import cos,sqrt,floor,log,inf
 import random
 import matplotlib.animation as animation
 from copy import copy
@@ -48,12 +48,15 @@ def generate_random(number):
 
 
 def cosRule(rad1,rad2,ang1,ang2):
-    q = 1.0
     net= ang2-ang1
-    net_distance = sqrt(rad1**2+rad2**2-2*rad1*rad2*cos(net))
     try:
-        energy = q*q*(1.0/net_distance)
-        
+        net_distance = sqrt(rad1**2+rad2**2-2*rad1*rad2*cos(net))
+    except ValueError:
+        print(net)
+        print(rad1**2+rad2**2-2*rad1*rad2*cos(net))
+        raise ValueError("math domain error")
+    try:
+        energy =(1.0/net_distance)  
     except ZeroDivisionError:
         energy = 1e12
     return energy

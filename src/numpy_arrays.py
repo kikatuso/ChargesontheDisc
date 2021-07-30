@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 from math import exp,atan,cos,sin
 import random
 import pandas as pd
-from statistics import median,mean
+from statistics import median,mean,stdev
 from copy import copy
 from random import randrange 
-from functions import generate_random,uniform,cosRule
-
+from functions import generate_random,uniform,cosRule,tempScaling
+import time
 
 
 
@@ -31,7 +31,7 @@ def acceptChange(cord,energy,new_energy,matrix,n_matrix,which,Ts):
     return cord,energy,matrix
 
 
-def moveCharge(number,cord,step,which):
+def moveCharge(number,cord,step,which,r):
     n_theta=2*uniform(1)*np.pi
     n = randrange(1,3)
     delta_radius = (-1)**n *step
@@ -99,41 +99,58 @@ def initialPos(number):
     energy,matrix = total_energy(number,cord)
     return cord,energy,matrix
  
-    
+
+Ts,Tf = tempScaling(0.2)
 #### HERE THE SIMULATION BEGINS, WE LOOK FOR GLOBAL MINIMUM AS A FUNCTION OF ALL CHARGES POSITION ON THE DISC
-def energy_find(number,Ts=20):
-    delta = []
+def energy_find(number,Ts=Ts):
+    r=10.0
     cord,energy,matrix= initialPos(number)
-    step = 1e-2
-    k = int((20.0**2/step**2)*number)
+    step = 1e-1
+    k = int(((2*r)**2/step**2)*number)
+    divider =int(k/100)
     for i in range(k):
         which= randrange(number)
-        cord = moveCharge(number,cord,step,which)
+        cord = moveCharge(number,cord,step,which,r)
         new_energy,n_matrix= total_energy(number,cord,matrix,which)
-        delta_energy = new_energy-energy
-        if delta_energy>=0.0:
-            delta.append(delta_energy)
         cord,energy,matrix= acceptChange(cord,energy,new_energy,matrix,n_matrix,which,Ts)
-        if i%int(k/100)==0:
+        if i%divider==0:
             Ts = Ts/1.3
     cord = np.delete(cord,-1,1)
-    return energy,cord,delta
-
-
-energy,cord,delta= energy_find(11)
-
-
-r = 10.0
-### PLOTING CHARGES' POSITION ON THE POLAR PLOT AND CHECKING THE FINAL ENERGY OF THE SYSTEM
-ax = plt.subplot(111, projection='polar')
-ax.plot(cord[1],cord[0],marker='o',markersize=7,c="fuchsia")
-ax.set_yticks(np.linspace(1.0,r,r//2))
-ax.set_title("Energy of this system is "+str(energies[-1])+" eV",y=1.08)
-plt.show()
+    return energy,cord
 
 
 
+for i,j in enumerate([23]):
+    print(j)
+    number = j
+    energies=[]
+    cords = []
+    for i in range(30):
+        energy, cord  = energy_find(number)  
+        energies.append(energy)
+        cords.append(cord) 
+        r = 10.0
+        c = "orangered"
+        ### PLOTING CHARGES' POSITION ON THE POLAR PLOT AND CHECKING THE FINAL ENERGY OF THE SYSTEM
+        fig, ax = plt.subplots(1, 1,figsize=(10,10), subplot_kw=dict(projection='polar'))
+        ax.scatter(cord[1],cord[0],marker='o',s=100,c=c)
+        ax.set_ylim([0,10.3])
+        ax.set_title("Energy of this system is "+str(energy)+" eV",y=1.08)
+        plt.show()
+    index = energies.index(min(energies))
+    final = cords[index]
+    final_e = energies[index]   
+    
+    r = 10.0
+    c = "orangered"
+    ### PLOTING CHARGES' POSITION ON THE POLAR PLOT AND CHECKING THE FINAL ENERGY OF THE SYSTEM
+    fig, ax = plt.subplots(1, 1,figsize=(10,10), subplot_kw=dict(projection='polar'))
+    ax.scatter(final[1],final[0],marker='o',s=100,c=c)
+    ax.set_ylim([0,10.3])
+    ax.set_title("Energy of this system is "+str(final_e)+" eV",y=1.08)
+    #plt.savefig("correcting/{}b.png".format(number))
 
+    
 
 
 

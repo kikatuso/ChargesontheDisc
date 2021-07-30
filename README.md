@@ -1,5 +1,5 @@
 
-**3r year computational Physics assignment concerning localization of equilibrium points of electric field for complex multi-charges system on a 2-dimensional disc.** 
+**3rd year computational Physics assignment concerning localization of equilibrium points of electric field for complex multi-charges system on a 2-dimensional disc.** 
 
 This problem is intractable and hence needs to be solved with the use of Monte Carlo sampling techniques. These were implemented, alongside with e.g. a range of convergence enhancements of the form of e.g. cooling techniques. 
 
